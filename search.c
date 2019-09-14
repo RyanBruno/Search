@@ -39,20 +39,17 @@ void print_path(struct path* p);
 
 /* The BF and DF search */
 /* Parameter adt is either a stack or queue */
+/* buffer should not be resized */
+/* This will break the pointers in adt */
 void search(struct array* node_array,
-        int start, int end,
+        int start, int end, struct array* buffer,
         void* adt, struct adt_vfuncts* vfuncts)
 {
-    struct array buffer;
-
-    /* Allocate a buffer for storing paths */
-    buffer = array_create(sizeof(struct path), 500);
-
     /* Add start node to adt */
     {
         struct path* p;
 
-        p = array_insert(&buffer);
+        p = array_insert(buffer);
         p->node = find_node_by_id(node_array, start);
         p->next = NULL;
 
@@ -90,7 +87,7 @@ void search(struct array* node_array,
 
             /* Add node with path to adt */
             node = find_node_by_id(node_array, *id);
-            np = array_insert(&buffer);
+            np = array_insert(buffer);
             np->node = node;
             np->next = p;
             vfuncts->in(adt, np);
@@ -100,6 +97,7 @@ void search(struct array* node_array,
 
 int main()
 {
+    struct array array_buffer;
     char* buffer;
     int start = 100;
     int end = 1;
@@ -108,7 +106,8 @@ int main()
     void* cb_data[2];
 
     /* Create buffer for stream input */
-    buffer = malloc(100);
+    array_buffer = array_create(sizeof(struct path), 1000);
+    buffer = array_buffer.array_data;
 
     printf("Please enter the file name and extension: ");
     scanf("%s", buffer);
@@ -128,7 +127,6 @@ int main()
         }
     }
 
-    printf("%s\n", buffer);
     printf("Start node: ");
     scanf("%d", &start);
     printf("End node: ");
@@ -165,8 +163,11 @@ int main()
 
     /* Run DFS */
     printf("Depth-first traversal\n");
-    search(&node_array, start, end, &s, &stack_vfuncts);
+    search(&node_array, start, end, &array_buffer, &s, &stack_vfuncts);
     printf("\n");
+
+    /* Reset array_buffer */
+    array_buffer.array_n = 0;
 
     /* Create queue */
     struct queue q;
@@ -174,7 +175,7 @@ int main()
 
     /* Run BFS */
     printf("Breadth-first traversal\n");
-    search(&node_array, start, end, &q, &queue_vfuncts);
+    search(&node_array, start, end, &array_buffer, &q, &queue_vfuncts);
     printf("\n");
 }
 
