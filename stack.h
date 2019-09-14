@@ -8,7 +8,7 @@
 
 typedef struct array stack;
 
-void stack_push(struct array* s, void *i);
-void *stack_pop(struct array* s);
+void stack_push(void* v, void *i);
+void *stack_pop(void* v);
 
 #endif

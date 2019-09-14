@@ -1,8 +1,9 @@
 /* Ryan Bruno */
 #include "stack.h"
 
-void stack_push(struct array* s, void *i)
+void stack_push(void* v, void *i)
 {
+    struct array* s = (struct array*) v;
     void **ptr;
 
     ptr = array_insert(s);
@@ -10,8 +11,9 @@ void stack_push(struct array* s, void *i)
 }
 
 
-void *stack_pop(struct array* s)
+void *stack_pop(void* v)
 {
+    struct array* s = (struct array*) v;
     void **ptr;
 
     if (s->array_n <= 0) 

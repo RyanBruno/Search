@@ -7,8 +7,8 @@
 #include "queue.h"
 
 struct adt_vfuncts {
-    void (*in)(struct array*, void *i);
-    void *(*out)(struct array*);
+    void (*in)(void* adt, void *i);
+    void *(*out)(void* adt);
 };
 
 struct adt_vfuncts stack_vfuncts = {
@@ -41,13 +41,18 @@ void print_path(struct path* p);
 /* Parameter adt is either a stack or queue */
 void search(struct array* node_array,
         int start, int end,
-        struct array* adt, struct adt_vfuncts* vfuncts)
+        void* adt, struct adt_vfuncts* vfuncts)
 {
+    struct array buffer;
+
+    /* Allocate a buffer for storing paths */
+    buffer = array_create(sizeof(struct path), 500);
+
     /* Add start node to adt */
     {
         struct path* p;
 
-        p = malloc(sizeof(struct path));
+        p = array_insert(&buffer);
         p->node = find_node_by_id(node_array, start);
         p->next = NULL;
 
@@ -85,7 +90,7 @@ void search(struct array* node_array,
 
             /* Add node with path to adt */
             node = find_node_by_id(node_array, *id);
-            np = malloc(sizeof(struct path));
+            np = array_insert(&buffer);
             np->node = node;
             np->next = p;
             vfuncts->in(adt, np);
@@ -132,9 +137,6 @@ int main()
     /* Create the node array */
     node_array = array_create(sizeof(struct node), 200);
 
-    /* Skip first line */
-    //stream_each(file_ptr, buffer, ',', '\n', NULL, NULL);
-
     while(feof(file_ptr) == 0){
         struct node* n;
 
@@ -159,17 +161,16 @@ int main()
 
     /* Create stack */
     stack s;
-    s = array_create(sizeof(struct path*), 2000);
+    s = array_create(sizeof(struct path*), 200);
 
     /* Run DFS */
     printf("Depth-first traversal\n");
     search(&node_array, start, end, &s, &stack_vfuncts);
     printf("\n");
 
-    /* Reuse stack memory for queue */
-    queue q = s;
-    memset(q.array_data, 0, q.array_s * q.array_c);
-    q.array_n = 1;
+    /* Create queue */
+    struct queue q;
+    q = queue_create();
 
     /* Run BFS */
     printf("Breadth-first traversal\n");

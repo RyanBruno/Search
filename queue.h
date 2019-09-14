@@ -4,17 +4,19 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "array.h"
 
 struct queue_item {
-    void *item;
-    struct queue_item *next;
+    void *i;
+    struct queue_item* next;
 };
 
-typedef struct array queue;
+struct queue {
+    struct queue_item* queue_front;
+    struct queue_item* queue_rear;
+};
 
-struct queue *queue_create();
-void queue_enqueue(struct array* q, void *i);
-void *queue_dequeue(struct array* q);
+struct queue queue_create();
+void queue_enqueue(void *v, void *i);
+void *queue_dequeue(void* v);
 
 #endif

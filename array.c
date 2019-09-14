@@ -21,10 +21,17 @@ void* array_insert(struct array* a)
     void *ptr;
 
     if (a->array_n >= a->array_c) {
-        // Resize by c * 1.5
-        // Also print to debug
         printf("Resize Needed!\n");
-        return NULL;
+
+        a->array_c *= 1.5;
+        printf("%d\n", a->array_c);
+
+        a->array_data = realloc(a->array_data, a->array_s * a->array_c);
+
+        if (a->array_data == NULL) {
+            printf("Resize Failed!\n");
+            return NULL;
+        }
     }
 
     ptr = &(a->array_data[a->array_n * a->array_s]);
