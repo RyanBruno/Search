@@ -43,16 +43,11 @@ void search(struct array* node_array,
         int start, int end,
         void* adt, struct adt_vfuncts* vfuncts)
 {
-    struct array buffer;
-
-    /* Allocate a buffer for storing paths */
-    buffer = array_create(sizeof(struct path), 500);
-
     /* Add start node to adt */
     {
         struct path* p;
 
-        p = array_insert(&buffer);
+        p = malloc(sizeof(struct path));
         p->node = find_node_by_id(node_array, start);
         p->next = NULL;
 
@@ -90,7 +85,7 @@ void search(struct array* node_array,
 
             /* Add node with path to adt */
             node = find_node_by_id(node_array, *id);
-            np = array_insert(&buffer);
+            np = malloc(sizeof(struct path));
             np->node = node;
             np->next = p;
             vfuncts->in(adt, np);
