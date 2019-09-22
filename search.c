@@ -88,40 +88,28 @@ int main()
     int start = 100;
     int end = 1;
     FILE *weight_file_ptr;
-    //FILE *heuristic_file_ptr;
+    FILE *heuristic_file_ptr;
     struct array node_array;
 
     /* Create buffer for stream input */
     buffer = malloc(100);
 
-    printf("Please enter the file name and extension: ");
+    printf("Please enter edge weight file name and extension: ");
     scanf("%s", buffer);
 
-    strcpy(buffer, "EdgeWeights.csv");
     weight_file_ptr = fopen(buffer, "r");
-    //strcpy(buffer, "minCosts.csv");
-    //heuristic_file_ptr = fopen(buffer, "r");
 
     if (weight_file_ptr == NULL) {
-        printf("Could not open file\n");
-        return;
-/*
-        printf("Trying BFS_DFS.csv\n");
+        printf("Trying EdgeWeights.csv\n");
 
-        strcpy(buffer, "BFS_DFS.csv");
+        strcpy(buffer, "EdgeWeights.csv");
         file_ptr = fopen(buffer, "r");
 
         if (file_ptr == NULL) {
             printf("Could not open file\n");
             return 1;
-        }*/
+        }
     }
-
-    printf("%s\n", buffer);
-    printf("Start node: ");
-    scanf("%d", &start);
-    printf("End node: ");
-    scanf("%d", &end);
 
     /* Create the node array */
     node_array = array_create(sizeof(struct node), 200);
@@ -174,6 +162,7 @@ int main()
         edge->weight = atof(buffer);
     }
 
+    /* Print node array */
     for (int i = 0; i < array_size(&node_array); i++) {
         struct node* n;
         struct array* edges;
@@ -190,6 +179,27 @@ int main()
             printf(" - %d:%f\n", e->id, e->weight);
         }
     }
+
+    printf("Please enter heuristic file name and extension: ");
+    scanf("%s", buffer);
+    heuristic_file_ptr = fopen(buffer, "r");
+
+    if (weight_file_ptr == NULL) {
+        printf("Trying minCosts.csv\n");
+
+        strcpy(buffer, "minCosts.csv");
+        file_ptr = fopen(buffer, "r");
+
+        if (file_ptr == NULL) {
+            printf("Could not open file\n");
+            return 1;
+        }
+    }
+
+    printf("Start node: ");
+    scanf("%d", &start);
+    printf("End node: ");
+    scanf("%d", &end);
 
 
 }
