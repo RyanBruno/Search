@@ -48,6 +48,29 @@ void* array_get(struct array* a, int n)
     return &(a->array_data[n * a->array_s]);
 }
 
+void *array_get_end(struct array* a)
+{
+    void *ptr;
+
+    ptr = array_get(a, a->array_n - 1);
+
+    return ptr;
+}
+
+void *array_pop(struct array* a)
+{
+    void *ptr;
+
+    if (a->array_n <= 0) 
+        return NULL;
+
+    ptr = array_get_end(a);
+
+    a->array_n--;
+    //printf("Arr:%d\n", *ptr);
+    return ptr;
+}
+
 int array_size(struct array* a)
 {
     return a->array_n;

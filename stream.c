@@ -16,7 +16,7 @@ int stream_first(FILE *file_ptr, char* buffer_r,
         if (c == stop_token) {
             return 0;           // TODO fix returns
         }
-        if (isdigit(c))
+        if (isdigit(c) || c == '.')
             strncat(buffer_r, &c, 1);
     }
     return 0;

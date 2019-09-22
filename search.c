@@ -3,35 +3,23 @@
 #include <ctype.h>
 #include "array.h"
 #include "stream.h"
-#include "stack.h"
-#include "queue.h"
-
-struct adt_vfuncts {
-    void (*in)(void* adt, void *i);
-    void *(*out)(void* adt);
-};
-
-struct adt_vfuncts stack_vfuncts = {
-    stack_push,
-    stack_pop
-};
-
-struct adt_vfuncts queue_vfuncts = {
-    queue_enqueue,
-    queue_dequeue
-};
+#include "heap.h"
 
 struct path {
     struct node* node;
     struct path* next;
 };
 
-struct node {
+struct edge {
     int id;
-    struct array edges; // Array of ints
+    float weight;
 };
 
-void parse_edges(void** cb_data);
+struct node {
+    int id;
+    struct array edges; // Array of edges
+};
+
 struct node* find_node_by_id(struct array* node_array, int id);
 int isnumber(const char* s);
 int is_id_in_path(struct path* p, int id);
@@ -40,8 +28,9 @@ void print_path(struct path* p);
 /* The BF and DF search */
 /* Parameter adt is either a stack or queue */
 void search(struct array* node_array,
-        int start, int end,
-        void* adt, struct adt_vfuncts* vfuncts)
+        int start, int end
+        )
+        //, void* adt, struct adt_vfuncts* vfuncts)
 {
     /* Add start node to adt */
     {
@@ -51,7 +40,7 @@ void search(struct array* node_array,
         p->node = find_node_by_id(node_array, start);
         p->next = NULL;
 
-        vfuncts->in(adt, p);
+        //vfuncts->in(adt, p);
     }
 
     while(1) {
@@ -59,7 +48,7 @@ void search(struct array* node_array,
         struct array* edges;
         
         /* Get next node */
-        p = (struct path*) vfuncts->out(adt);
+        //p = (struct path*) vfuncts->out(adt);
         edges = &(p->node->edges);
 
         /* Check if we are at the end */
@@ -88,7 +77,7 @@ void search(struct array* node_array,
             np = malloc(sizeof(struct path));
             np->node = node;
             np->next = p;
-            vfuncts->in(adt, np);
+            //vfuncts->in(adt, np);
         }
     }
 }
@@ -98,9 +87,9 @@ int main()
     char* buffer;
     int start = 100;
     int end = 1;
-    FILE *file_ptr;
+    FILE *weight_file_ptr;
+    //FILE *heuristic_file_ptr;
     struct array node_array;
-    void* cb_data[2];
 
     /* Create buffer for stream input */
     buffer = malloc(100);
@@ -108,10 +97,15 @@ int main()
     printf("Please enter the file name and extension: ");
     scanf("%s", buffer);
 
-    file_ptr = fopen(buffer, "r");
+    strcpy(buffer, "EdgeWeights.csv");
+    weight_file_ptr = fopen(buffer, "r");
+    //strcpy(buffer, "minCosts.csv");
+    //heuristic_file_ptr = fopen(buffer, "r");
 
-    if (file_ptr == NULL) {
+    if (weight_file_ptr == NULL) {
         printf("Could not open file\n");
+        return;
+/*
         printf("Trying BFS_DFS.csv\n");
 
         strcpy(buffer, "BFS_DFS.csv");
@@ -120,7 +114,7 @@ int main()
         if (file_ptr == NULL) {
             printf("Could not open file\n");
             return 1;
-        }
+        }*/
     }
 
     printf("%s\n", buffer);
@@ -132,45 +126,72 @@ int main()
     /* Create the node array */
     node_array = array_create(sizeof(struct node), 200);
 
-    while(feof(file_ptr) == 0){
+    while(feof(weight_file_ptr) == 0){
         struct node* n;
+        int id;
+        struct edge* edge;
 
         /* Read first number */
-        stream_first(file_ptr, buffer, ',', '\n'); // check ret
+        stream_first(weight_file_ptr, buffer, ',', '\n'); // check ret
 
         if (isnumber(buffer) == 0) {
-            stream_each(file_ptr, buffer, ',', '\n', NULL, NULL);
+            stream_each(weight_file_ptr, buffer, ',', '\n', NULL, NULL);
             continue;
         }
 
-        /* Initalize node */
-        n = (struct node*) array_insert(&node_array);
-        n->edges = array_create(sizeof(int), 10);
-        n->id = atoi(buffer);
+        id = atoi(buffer);
+        n = find_node_by_id(&node_array, id);
 
-        // cb_data = [ cosnt char* buffer, node* n ]
-        cb_data[0] = (void*) buffer;
-        cb_data[1] = (void*) n;
-        stream_each(file_ptr, buffer, ',', '\n', parse_edges, &cb_data);
+        if (n == NULL) {
+            /* Initalize node */
+            n = (struct node*) array_insert(&node_array);
+            n->edges = array_create(sizeof(struct edge), 10);
+            n->id = id;
+        }
+
+        
+        /* Read second number */
+        stream_first(weight_file_ptr, buffer, ',', '\n'); // check ret
+
+        if (isnumber(buffer) == 0) {
+            stream_each(weight_file_ptr, buffer, ',', '\n', NULL, NULL);
+            continue;
+        }
+
+        /* Put edge in node's edge array with weight */
+        edge = array_insert(&(n->edges));
+        edge->id = atoi(buffer);
+        edge->weight = 100000; // Temp value
+
+        /* Read third number */
+        stream_first(weight_file_ptr, buffer, ',', '\n'); // check ret
+
+        if (isnumber(buffer) == 0) {
+            stream_each(weight_file_ptr, buffer, ',', '\n', NULL, NULL);
+            continue;
+        }
+
+        edge->weight = atof(buffer);
     }
 
-    /* Create stack */
-    stack s;
-    s = array_create(sizeof(struct path*), 200);
+    for (int i = 0; i < array_size(&node_array); i++) {
+        struct node* n;
+        struct array* edges;
 
-    /* Run DFS */
-    printf("Depth-first traversal\n");
-    search(&node_array, start, end, &s, &stack_vfuncts);
-    printf("\n");
+        n = array_get(&node_array, i);
+        edges = &(n->edges);
 
-    /* Create queue */
-    struct queue q;
-    q = queue_create();
+        printf("%d\n", n->id);
 
-    /* Run BFS */
-    printf("Breadth-first traversal\n");
-    search(&node_array, start, end, &q, &queue_vfuncts);
-    printf("\n");
+        for (int j = 0; j < array_size(edges); j++) {
+            struct edge* e;
+
+            e = array_get(edges, j);
+            printf(" - %d:%f\n", e->id, e->weight);
+        }
+    }
+
+
 }
 
 int is_id_in_path(struct path* p, int id)
@@ -182,18 +203,6 @@ int is_id_in_path(struct path* p, int id)
         p = p->next;
     }
     return 1;
-}
-
-void parse_edges(void** cb_data)
-{
-    const char* buffer = (const char*) cb_data[0];
-    struct node* n = (struct node*) cb_data[1];
-    int *id;
-    
-    if (isnumber(buffer) != 0) {
-        id = array_insert(&(n->edges));
-        *id = atoi(buffer);
-    }
 }
 
 struct node*
@@ -215,7 +224,7 @@ int isnumber(const char* s) {
     if (strlen(s) == 0) return 0;
 
     for (int i = 0; i < strlen(s); i++) {
-        if (isdigit(s[i]) == 0) {
+        if (isdigit(s[i]) == 0 && s[i] != '.') {
             return 0;
         }
     }
