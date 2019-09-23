@@ -21,11 +21,8 @@ void* array_insert(struct array* a)
     void *ptr;
 
     if (a->array_n >= a->array_c) {
-        printf("Resize Needed!\n");
 
         a->array_c *= 1.5;
-        printf("%d\n", a->array_c);
-
         a->array_data = realloc(a->array_data, a->array_s * a->array_c);
 
         if (a->array_data == NULL) {
@@ -67,7 +64,6 @@ void *array_pop(struct array* a)
     ptr = array_get_end(a);
 
     a->array_n--;
-    //printf("Arr:%d\n", *ptr);
     return ptr;
 }
 
