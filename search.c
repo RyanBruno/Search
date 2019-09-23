@@ -8,6 +8,7 @@
 struct path {
     struct node* node;
     struct path* next;
+    int cost;
 };
 
 struct edge {
@@ -20,18 +21,23 @@ struct node {
     struct array edges; // Array of edges
 };
 
+struct array*
+find_from_array(struct array* heuristics_array, int id);
+void parse_heuristics(void** cb_data);
 struct node* find_node_by_id(struct array* node_array, int id);
 int isnumber(const char* s);
 int is_id_in_path(struct path* p, int id);
 void print_path(struct path* p);
 
-/* The BF and DF search */
-/* Parameter adt is either a stack or queue */
-void search(struct array* node_array,
-        int start, int end
-        )
+/* The a star search */
+void a_star_search(struct array* node_array,
+        struct array* heuristics_array,
+        int start, int end)
         //, void* adt, struct adt_vfuncts* vfuncts)
 {
+    heap h;
+
+    h = heap_create(100);
     /* Add start node to adt */
     {
         struct path* p;
@@ -39,8 +45,9 @@ void search(struct array* node_array,
         p = malloc(sizeof(struct path));
         p->node = find_node_by_id(node_array, start);
         p->next = NULL;
+        p->cost = 0;
 
-        //vfuncts->in(adt, p);
+        heap_insert(&h, p, 0);
     }
 
     while(1) {
@@ -48,7 +55,7 @@ void search(struct array* node_array,
         struct array* edges;
         
         /* Get next node */
-        //p = (struct path*) vfuncts->out(adt);
+        p = (struct path*) heap_pop(&h);
         edges = &(p->node->edges);
 
         /* Check if we are at the end */
@@ -58,26 +65,44 @@ void search(struct array* node_array,
             break;
         }
 
-        /* Add all the edges to adt */
+        /* Add all the edges to heap */
         for (int i = 0; i < array_size(edges); i++) {
-            int* id;
+            struct edge* e;
             struct node* node;
             struct path* np;
+            struct array* to_array;
+            float *heuristic;
 
             /* Get edge */
-            id = (int*) array_get(edges, i);
+            e = (struct edge*) array_get(edges, i);
 
             /* Check if node is already visited */
-            if (is_id_in_path(p, *id) == 0) {
+            if (is_id_in_path(p, e->id) == 0) {
                 continue;
             }
 
+            {
+                int from_id = end;
+
+                if (e->id < end) {
+                    from_id = e->id;
+                }
+                // end, e->id
+                printf("from_id: %d\n", from_id);
+                to_array = find_from_array(heuristics_array, from_id);
+                printf("tod_array: %d\n", to_array);
+                heuristic = (float*) array_get(to_array, abs(e->id - end));
+                printf("heuristic: %d\n", heuristic);
+            }
+
             /* Add node with path to adt */
-            node = find_node_by_id(node_array, *id);
+            node = find_node_by_id(node_array, e->id);
+
             np = malloc(sizeof(struct path));
             np->node = node;
             np->next = p;
-            //vfuncts->in(adt, np);
+            np->cost = e->weight;
+            heap_insert(&h, np, np->cost + *heuristic);
         }
     }
 }
@@ -88,8 +113,9 @@ int main()
     int start = 100;
     int end = 1;
     FILE *weight_file_ptr;
-    FILE *heuristic_file_ptr;
+    FILE *heuristics_file_ptr;
     struct array node_array;
+    void* cb_data[2];
 
     /* Create buffer for stream input */
     buffer = malloc(100);
@@ -103,9 +129,9 @@ int main()
         printf("Trying EdgeWeights.csv\n");
 
         strcpy(buffer, "EdgeWeights.csv");
-        file_ptr = fopen(buffer, "r");
+        weight_file_ptr = fopen(buffer, "r");
 
-        if (file_ptr == NULL) {
+        if (weight_file_ptr == NULL) {
             printf("Could not open file\n");
             return 1;
         }
@@ -180,20 +206,73 @@ int main()
         }
     }
 
-    printf("Please enter heuristic file name and extension: ");
+    printf("Please enter heuristics file name and extension: ");
     scanf("%s", buffer);
-    heuristic_file_ptr = fopen(buffer, "r");
+    heuristics_file_ptr = fopen(buffer, "r");
 
-    if (weight_file_ptr == NULL) {
+    if (heuristics_file_ptr == NULL) {
         printf("Trying minCosts.csv\n");
 
         strcpy(buffer, "minCosts.csv");
-        file_ptr = fopen(buffer, "r");
+        heuristics_file_ptr = fopen(buffer, "r");
 
-        if (file_ptr == NULL) {
+        if (heuristics_file_ptr == NULL) {
             printf("Could not open file\n");
             return 1;
         }
+    }
+
+    struct array heuristics_array;
+    heuristics_array = array_create(sizeof(struct array), 200);
+
+    while(feof(heuristics_file_ptr) == 0){
+        float from_id;
+        struct array* to_array;
+        float *temp_id;
+        struct array temp;
+
+        /* Read first number */
+        stream_first(heuristics_file_ptr, buffer, ',', '\n');
+
+        if (isnumber(buffer) == 0) {
+            stream_each(heuristics_file_ptr, buffer, ',', '\n', NULL, NULL);
+            continue;
+        }
+
+        /* Get int */
+        from_id = atof(buffer);
+
+        /* Create array */
+        to_array = (struct array*) array_insert(&heuristics_array);
+        temp = array_create(sizeof(float), 50);
+        *to_array = temp;
+
+        /* Set first number to from_id */
+        temp_id = array_insert(to_array);
+        *temp_id = from_id;
+
+        cb_data[0] = buffer;
+        cb_data[1] = to_array;
+        /* Parse rest of row */
+        stream_each(heuristics_file_ptr, buffer, ',', '\n', parse_heuristics, &cb_data);
+        /* Get Last line fix later */
+        parse_heuristics(&cb_data);
+    }
+
+    for (int i = 0; i < array_size(&heuristics_array) && i < 10; i++) {
+        struct array* to_array;
+        float *id;
+
+        to_array = array_get(&heuristics_array, i);
+
+        printf("%d: ", i);
+
+        for (int j = 0; j < array_size(to_array); j++) {
+
+            id = array_get(to_array, j);
+            printf("%f - ", *id);
+        }
+        printf("\n");
     }
 
     printf("Start node: ");
@@ -201,7 +280,30 @@ int main()
     printf("End node: ");
     scanf("%d", &end);
 
+    a_star_search(&node_array, &heuristics_array, start, end);
+}
 
+void parse_heuristics(void** cb_data)
+{
+    const char* buffer = (const char*) cb_data[0];
+    struct array* to_array = (struct array*) cb_data[1];
+    float from_id;
+    float *temp_id;
+
+    if (isnumber(buffer) == 0) {
+        return;
+    }
+
+    /* Get float */
+    from_id = atof(buffer);
+
+    if (from_id == 0) {
+        return;
+    }
+
+    /* Set number to from_id */
+    temp_id = (float*) array_insert(to_array);
+    *temp_id = from_id;
 }
 
 int is_id_in_path(struct path* p, int id)
@@ -213,6 +315,22 @@ int is_id_in_path(struct path* p, int id)
         p = p->next;
     }
     return 1;
+}
+
+struct array*
+find_from_array(struct array* heuristics_array, int id)
+{
+    for (int i = 0; i < array_size(heuristics_array); i++) {
+        struct array* temp;
+        int *temp_id;
+        
+        temp = (struct array*) array_get(heuristics_array, i);
+        temp_id = (int*) array_get(temp, 0); // Needs to be float :(
+        if (*temp_id == id) {
+            return temp;
+        }
+    }
+    return NULL;
 }
 
 struct node*
