@@ -1,12 +1,8 @@
 #include "heap.h"
 
-heap heap_create(int n)
+void heap_create(heap* h_r, int n)
 {
-    heap h;
-
-    h = array_create(sizeof(struct heap_item), n);
-
-    return h;
+    array_create(h_r, sizeof(struct heap_item), n);
 }
 
 void heap_insert(heap* h, void* item, float priority)

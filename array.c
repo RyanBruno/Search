@@ -1,19 +1,14 @@
 /* Ryan Bruno */
 #include "array.h"
 
-struct array
-array_create(size_t s, int c)
+void array_create(struct array* array_r, size_t s, int c)
 {
-    struct array a;
+    array_r->array_c = c;
+    array_r->array_n = 0;
+    array_r->array_s = s;
+    array_r->array_data = (char*) malloc(s * c);
 
-    a.array_c = c;
-    a.array_n = 0;
-    a.array_s = s;
-    a.array_data = (char*) malloc(s * c);
-
-    memset(a.array_data, 0, s * c);
-
-    return a;
+    memset(array_r->array_data, 0, s * c);
 }
 
 void* array_insert(struct array* a) 
@@ -70,4 +65,9 @@ void *array_pop(struct array* a)
 int array_size(struct array* a)
 {
     return a->array_n;
+}
+
+void array_reset(struct array* a)
+{
+    a->array_n = 0;
 }

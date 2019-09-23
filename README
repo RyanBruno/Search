@@ -1,0 +1,8 @@
+++++A_Star Search Project++++
+
+How to compile:
+ - On linux run "make"
+How to run:
+ - After compiling run "./search"
+
+Known Bugs:

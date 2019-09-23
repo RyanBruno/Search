@@ -8,7 +8,7 @@ struct heap_item {
     float heap_priority;
 };
 
-heap heap_create(int n);
+void heap_create(heap* h_r, int n);
 void heap_insert(heap* h, void* item, float priority);
 void *heap_pop(heap* h);
 void array_swap_index(struct array* arr, int a, int b);
