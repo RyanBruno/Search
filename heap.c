@@ -9,7 +9,7 @@ heap heap_create(int n)
     return h;
 }
 
-void heap_insert(heap* h, void* item, int priority)
+void heap_insert(heap* h, void* item, float priority)
 {
     struct heap_item* ptr;
 
@@ -56,8 +56,8 @@ void *heap_pop(heap* h)
         struct heap_item* left_child;
         struct heap_item* right_child;
 
-        int left_priority = 99999;
-        int right_priority = 99999;
+        float left_priority = 99999.0;
+        float right_priority = 99999.0;
 
         parent = array_get(h, index);
         left_child = array_get(h, index_left);
