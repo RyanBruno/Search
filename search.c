@@ -5,6 +5,7 @@
 #include "array.h"
 #include "stream.h"
 #include "heap.h"
+#include "buffer.h"
 
 struct path {
     struct node* node;
@@ -32,7 +33,8 @@ void print_path(struct path* p);
 /* The a_star algorithm */
 float a_star_search(struct array* node_array,
         struct array* heuristics_array, heap* h,
-        int start, int end, float id_max_cost)
+        buffer_t* b, int start, int end,
+        float id_max_cost)
 {
     float next_id_max_cost;
 
@@ -41,7 +43,7 @@ float a_star_search(struct array* node_array,
     {
         struct path* p;
 
-        p = malloc(sizeof(struct path));
+        p = buffer_insert(b);
         p->node = find_node_by_id(node_array, start);
         p->next = NULL;
         p->cost = 0;
@@ -97,7 +99,7 @@ float a_star_search(struct array* node_array,
             node = find_node_by_id(node_array, e->id);
 
             /* Add edge to heap */
-            np = malloc(sizeof(struct path));
+            np = buffer_insert(b);
             np->node = node;
             np->next = p;
             np->cost = cost;
@@ -247,20 +249,23 @@ int main()
 
     /* Create a heap for a_star */
     heap h;
+    buffer_t b;
 
     h = heap_create(100);
+    b = buffer_create(sizeof(struct path), 50);
 
     /* Run the a_star algorithm */
     printf("A* minimum cost path\n");
-    a_star_search(&node_array, &heuristics_array, &h, start, end, FLT_MAX);
+    a_star_search(&node_array, &heuristics_array, &h, &b, start, end, FLT_MAX);
 
     /* Run the IDa_star algorithm */
+    /*
     printf("IDA* minimum cost path\n");
     float id_max_cost = 0;
     while(id_max_cost != -1) {
         h.array_n = 0;
         id_max_cost = a_star_search(&node_array, &heuristics_array, &h, start, end, id_max_cost);
-    }
+    }*/
 }
 
 void parse_heuristics(void** cb_data)

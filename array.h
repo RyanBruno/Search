@@ -20,6 +20,6 @@ void *array_get(struct array* a, int n);
 void *array_get_end(struct array* a);
 void *array_pop(struct array* a);
 int array_size(struct array* a);
-
+int array_full(struct array* a);
 
 #endif

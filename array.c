@@ -22,6 +22,7 @@ void* array_insert(struct array* a)
 
     if (a->array_n >= a->array_c) {
 
+        printf("Resized\n");
         a->array_c *= 1.5;
         a->array_data = realloc(a->array_data, a->array_s * a->array_c);
 
@@ -29,6 +30,8 @@ void* array_insert(struct array* a)
             printf("Resize Failed!\n");
             return NULL;
         }
+    } else {
+        printf("Not Resized\n");
     }
 
     ptr = &(a->array_data[a->array_n * a->array_s]);
@@ -70,4 +73,9 @@ void *array_pop(struct array* a)
 int array_size(struct array* a)
 {
     return a->array_n;
+}
+
+int array_full(struct array* a)
+{
+    return a->array_n >= a->array_c;
 }
